@@ -18,13 +18,13 @@ const (
 	Ethereum ChainID = 1
 
 	// Ropsten denotes the Ropsten testnet
-	Ropsten = 3
+	Ropsten ChainID = 3
 
 	// Rinkeby denotes the Rinkeby testnet
-	Rinkeby = 4
+	Rinkeby ChainID = 4
 
 	// Kovan denotes the Kovan testnet
-	Kovan = 42
+	Kovan ChainID = 42
 )
 
 const (
