@@ -4,23 +4,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/georacle-labs/go-georacle/chains"
-	"github.com/georacle-labs/go-georacle/chains/evm"
-)
-
-var (
-	// URI is the ws uri of an eth node
-	URI = os.Getenv("ETH_WS_URI")
+	"github.com/georacle-labs/go-georacle/cmd"
 )
 
 func main() {
-	c := evm.NewClient(chains.KovanChainParams, URI)
-
-	if err := c.Open(); err != nil {
+	cli, err := cmd.NewCLI()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer c.Close()
-
-	c.Run()
+	if err := cli.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }

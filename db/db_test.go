@@ -11,10 +11,9 @@ import (
 var dbURI = os.Getenv("DB_URI")
 
 func TestValidConnection(t *testing.T) {
-
-	db := NewDB(dbURI)
-	if db == nil {
-		t.Fatal(db)
+	db := new(DB)
+	if err := db.Open(dbURI); err != nil {
+		t.Fatal(err)
 	}
 
 	defer db.Close()

@@ -11,11 +11,12 @@ import (
 
 // DB encapsulates a mongo connection
 type DB struct {
+	Name     string // chain dependent
 	Client   *mongo.Client
 	Services *mongo.Collection
 }
 
-// Service represents a Generic service type
+// Service represents a generic service type
 type Service struct {
 	ID          primitive.ObjectID `bson:" _id"`
 	CreatedAt   time.Time          `bson:"created_at"`
@@ -25,17 +26,18 @@ type Service struct {
 	QueryDigest []byte             `bson:"query_digest"`
 }
 
-// NewDB returns a new mongo connection
-func NewDB(uri string) *DB {
+// Open initiates a new mongo connection
+func (d *DB) Open(uri string) error {
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		return nil
+		return err
 	}
 
-	db := client.Database("georacle")
-	services := db.Collection("services")
+	db := client.Database(d.Name)
+	d.Services = db.Collection("services")
+	d.Client = client
 
-	return &DB{Client: client, Services: services}
+	return nil
 }
 
 // Close terminates an existing mongo connection

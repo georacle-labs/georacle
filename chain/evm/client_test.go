@@ -3,8 +3,6 @@ package evm
 import (
 	"os"
 	"testing"
-
-	"github.com/georacle-labs/go-georacle/chains"
 )
 
 var (
@@ -12,8 +10,8 @@ var (
 )
 
 func TestConnection(t *testing.T) {
-	c := NewClient(chains.KovanChainParams, URI)
-	if c == nil {
+	c, err := NewClient(42, URI)
+	if err != nil {
 		t.Fatal(c)
 	}
 
