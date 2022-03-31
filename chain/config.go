@@ -3,17 +3,6 @@ package chain
 // ID is a chain's unique identifier
 type ID uint64
 
-// Type denotes a family of chains
-type Type uint64
-
-// Config represents a set of chain parameters
-type Config struct {
-	ID   ID     // chain id
-	Name string // canonical name
-	Type Type   // underlying runtime
-	Test bool   // true if testnet
-}
-
 const (
 	// Ethereum mainnet
 	Ethereum ID = 1
@@ -28,10 +17,32 @@ const (
 	Kovan ID = 42
 )
 
+// Type denotes a family of chains
+type Type uint64
+
 const (
 	// EVM compatible chains
 	EVM Type = 1
 )
+
+func (t Type) String() (s string) {
+	switch t {
+	case EVM:
+		s = "evm"
+	default:
+		return
+	}
+
+	return
+}
+
+// Config represents a set of chain parameters
+type Config struct {
+	ID   ID     // chain id
+	Name string // canonical name
+	Type Type   // underlying runtime
+	Test bool   // true if testnet
+}
 
 var (
 	// Chains denotes all valid chains

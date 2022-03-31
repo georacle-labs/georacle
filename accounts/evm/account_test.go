@@ -7,19 +7,20 @@ import (
 )
 
 func TestAccountGen(t *testing.T) {
-	if _, err := Gen(); err != nil {
+	a := new(Account)
+	if err := a.Gen(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestAccountMarshal(t *testing.T) {
-	a, err := Gen()
-	if err != nil {
+	a := new(Account)
+	if err := a.Gen(); err != nil {
 		t.Fatal(err)
 	}
 
 	r := make([]byte, 32)
-	_, err = rand.Read(r)
+	_, err := rand.Read(r)
 	if err != nil {
 		t.Fatal(err)
 	}

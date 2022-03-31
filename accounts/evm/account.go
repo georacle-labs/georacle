@@ -17,21 +17,24 @@ type Account struct {
 }
 
 // Gen generates a new account
-func Gen() (*Account, error) {
+func (a *Account) Gen() error {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	priv, err := crypto.GenerateKey()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pubKey := priv.PublicKey
 	addr := crypto.PubkeyToAddress(pubKey)
 
-	return &Account{ID: id, Address: addr, PrivateKey: priv}, nil
+	a.ID = id
+	a.Address = addr
+	a.PrivateKey = priv
+	return nil
 }
 
 // Export returns the account as encrypted JSON using standard scrypt params
