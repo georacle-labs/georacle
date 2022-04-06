@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/georacle-labs/go-georacle/accounts"
-	"github.com/georacle-labs/go-georacle/chain"
-	"github.com/georacle-labs/go-georacle/db"
+	"github.com/georacle-labs/georacle/accounts"
+	"github.com/georacle-labs/georacle/chain"
+	"github.com/georacle-labs/georacle/db"
 	"github.com/pkg/errors"
 )
 

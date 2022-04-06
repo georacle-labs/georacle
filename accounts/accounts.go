@@ -7,8 +7,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/georacle-labs/go-georacle/accounts/evm"
-	"github.com/georacle-labs/go-georacle/chain"
+	"github.com/georacle-labs/georacle/accounts/evm"
+	"github.com/georacle-labs/georacle/chain"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

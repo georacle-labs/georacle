@@ -1,4 +1,4 @@
-module github.com/georacle-labs/go-georacle
+module github.com/georacle-labs/georacle
 
 go 1.18
 

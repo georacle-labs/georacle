@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/georacle-labs/go-georacle/chain"
-	"github.com/georacle-labs/go-georacle/client"
+	"github.com/georacle-labs/georacle/chain"
+	"github.com/georacle-labs/georacle/client"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/crypto/ssh/terminal"
 )

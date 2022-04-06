@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/georacle-labs/go-georacle/cmd"
+	"github.com/georacle-labs/georacle/cmd"
 )
 
 func main() {

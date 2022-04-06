@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/georacle-labs/go-georacle/chain"
-	"github.com/georacle-labs/go-georacle/db"
+	"github.com/georacle-labs/georacle/chain"
+	"github.com/georacle-labs/georacle/db"
 )
 
 var dbURI = os.Getenv("DB_URI")

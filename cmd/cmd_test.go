@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/georacle-labs/go-georacle/client"
+	"github.com/georacle-labs/georacle/client"
 )
 
 func TestNewClient(t *testing.T) {

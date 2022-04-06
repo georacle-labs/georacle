@@ -1,7 +1,7 @@
 package chain
 
 import (
-	"github.com/georacle-labs/go-georacle/chain/evm"
+	"github.com/georacle-labs/georacle/chain/evm"
 	"github.com/pkg/errors"
 )
 
