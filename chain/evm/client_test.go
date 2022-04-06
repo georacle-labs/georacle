@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	URI = os.Getenv("ETH_WS_URI")
+	wsURI = os.Getenv("WS_URI")
 )
 
 func TestConnection(t *testing.T) {
-	c, err := NewClient(42, URI)
+	c, err := NewClient(42, wsURI)
 	if err != nil {
 		t.Fatal(c)
 	}

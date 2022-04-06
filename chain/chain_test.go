@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	WSURI = os.Getenv("ETH_WS_URI")
+	wsURI = os.Getenv("WS_URI")
 )
 
 func TestNewValidChain(t *testing.T) {
 	for _, c := range Chains {
-		_, err := New(c, WSURI)
+		_, err := New(c, wsURI)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -20,7 +20,7 @@ func TestNewValidChain(t *testing.T) {
 
 func TestNewInvalidChain(t *testing.T) {
 	cfg := &Config{}
-	c, err := New(cfg, WSURI)
+	c, err := New(cfg, wsURI)
 	if err == nil || c != nil {
 		t.Fatal("expected error thrown")
 	}
