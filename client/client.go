@@ -21,7 +21,8 @@ type Client struct {
 // Init Client
 func (c *Client) Init() error {
 	if !c.Alive {
-		if err := c.Accounts.Init(); err != nil {
+		// init the account store
+		if err := c.Accounts.Init(c.DB.Accounts); err != nil {
 			return err
 		}
 		c.Alive = true

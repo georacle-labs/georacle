@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	ctx "context"
 	"fmt"
 	"log"
 	"os"
@@ -17,12 +16,12 @@ import (
 // Account represents a generic account
 type Account interface {
 	Gen() error
-	Export(string) ([]byte, error)
-	Import([]byte, string) error
+	Export([]byte) ([]byte, error)
+	Import([]byte, []byte) error
 	String() string
 }
 
-// Entry represents a keystore entry
+// Entry represents an account store entry
 type Entry struct {
 	ID      primitive.ObjectID
 	Account Account
@@ -30,27 +29,31 @@ type Entry struct {
 
 // Master holds a chain's master key
 // This Key:
-//  * Is responsible for encrypting/decrypting a keystore
+//  * Is responsible for encrypting/decrypting an account store
 //  * Is user-provided and loaded into memory at runtime
 //  * Should never touch disk
 type Master struct {
 	Type     chain.Type
-	Password string
+	Password []byte
 	Entries  []Entry
-	Ctx      ctx.Context
-	Store    *mongo.Collection
+	Store    Store
 }
 
-// Init the master keystore
-func (m *Master) Init() error {
-	log.Println("Decrypting keystore...")
-	entries, err := m.GetEntries()
+// Init the master account store
+func (m *Master) Init(db *mongo.Database) error {
+	// initialize account store
+	m.Store.AccountType = m.Type
+	if err := m.Store.Init(db); err != nil {
+		return err
+	}
+
+	log.Println("Decrypting accounts...")
+	entries, err := m.Store.GetEntries(m.Password)
 	if err != nil {
 		return err
 	}
 
 	m.Entries = entries
-
 	log.Printf("Decrypted %d account(s)\n", len(m.Entries))
 
 	return nil
@@ -80,14 +83,14 @@ func (m *Master) NewAccount() error {
 	return nil
 }
 
-// RemoveAccount removes an account from the keystore by index
+// RemoveAccount removes an account from the store by index
 func (m *Master) RemoveAccount(index uint) error {
 	if int(index) >= len(m.Entries) {
 		return errors.New("InvalidIndexError")
 	}
 
 	toRemove := m.Entries[index]
-	if err := m.RemoveEntry(toRemove.ID); err != nil {
+	if err := m.Store.RemoveEntry(toRemove.ID); err != nil {
 		return err
 	}
 
@@ -98,7 +101,7 @@ func (m *Master) RemoveAccount(index uint) error {
 	return nil
 }
 
-// InsertAccount inserts a unique account into the keystore
+// InsertAccount inserts a unique account into the store
 func (m *Master) InsertAccount(account Account) error {
 	for _, e := range m.Entries {
 		if e.Account.String() == account.String() {
@@ -111,25 +114,13 @@ func (m *Master) InsertAccount(account Account) error {
 		return err
 	}
 
-	id, err := m.AddEntry(encrypted)
+	id, err := m.Store.AddEntry(encrypted)
 	if err != nil {
 		return err
 	}
 
 	m.Entries = append(m.Entries, Entry{id, account})
 	return nil
-}
-
-// DecryptAccount decrypts a single account conditioned on the account type
-func (m *Master) DecryptAccount(encryptedAccount []byte) (Account, error) {
-	switch m.Type {
-	case chain.EVM:
-		a := new(evm.Account)
-		err := a.Import(encryptedAccount, m.Password)
-		return a, err
-	default:
-		return nil, errors.Errorf("Invalid Account type: %v", m.Type)
-	}
 }
 
 // DumpAccounts to stdout

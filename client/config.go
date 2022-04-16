@@ -1,13 +1,11 @@
 package client
 
 import (
-	ctx "context"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
-	"sync"
 
 	"github.com/georacle-labs/georacle/accounts"
 	"github.com/georacle-labs/georacle/chain"
@@ -42,16 +40,13 @@ func (c *Config) NewClient() (*Client, error) {
 
 	client := &Client{
 		Params: chainParams,
-		Wg:     new(sync.WaitGroup),
 		Chain:  node,
 		DB:     db,
 	}
 
 	client.Accounts = accounts.Master{
 		Type:     chainParams.Type,
-		Password: c.Password,
-		Ctx:      ctx.Background(),
-		Store:    db.Keys,
+		Password: []byte(c.Password),
 	}
 
 	return client, nil

@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"context"
 	"math/rand"
 	"os"
 	"testing"
@@ -20,22 +19,18 @@ func GenTestKeyStore() (*Master, error) {
 		return nil, err
 	}
 
-	return &Master{
+	master := &Master{
 		Type:     chain.EVM,
-		Password: "SuperSecurePassword",
-		Ctx:      context.Background(),
-		Store:    db.Keys,
-	}, nil
+		Password: []byte("SuperSecurePassword"),
+	}
 
+	err := master.Init(db.Accounts)
+	return master, err
 }
 
 func TestAccountGen(t *testing.T) {
 	ks, err := GenTestKeyStore()
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := ks.Init(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -54,10 +49,6 @@ func TestAccountGen(t *testing.T) {
 func TestAccountRemove(t *testing.T) {
 	ks, err := GenTestKeyStore()
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := ks.Init(); err != nil {
 		t.Fatal(err)
 	}
 

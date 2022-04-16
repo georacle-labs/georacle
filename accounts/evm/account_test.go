@@ -19,12 +19,11 @@ func TestAccountMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := make([]byte, 32)
-	_, err := rand.Read(r)
+	password := make([]byte, 32)
+	_, err := rand.Read(password)
 	if err != nil {
 		t.Fatal(err)
 	}
-	password := string(r)
 
 	enc, err := a.Export(password)
 	if err != nil {

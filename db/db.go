@@ -4,19 +4,22 @@ import (
 	ctx "context"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	// AccountStore is the default name of the account store database
+	AccountStore = "georacle_account_store"
+)
+
 // DB encapsulates a mongo connection
 type DB struct {
-	Name     string            // the name of the db (typically matches network name)
-	Ctx      ctx.Context       // calling context
-	Client   *mongo.Client     // persistent mongo connection
-	Services *mongo.Collection // collection of spatial queries
-	Keys     *mongo.Collection // collection of encrypted keys
+	Name     string          // the name of the db (typically matches network name)
+	Ctx      ctx.Context     // calling context
+	Client   *mongo.Client   // persistent mongo connection
+	Accounts *mongo.Database // client account store
 }
 
 // Service represents a generic service type
@@ -38,18 +41,7 @@ func (d *DB) Open(uri string) error {
 	}
 
 	d.Client = client
-	db := client.Database(d.Name)
-	d.Services = db.Collection("services")
-	d.Keys = db.Collection("keys")
-
-	// ensure unique key entries
-	d.Keys.Indexes().CreateOne(
-		d.Ctx,
-		mongo.IndexModel{
-			Keys:    bson.D{{Key: "raw", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
-	)
+	d.Accounts = client.Database(AccountStore)
 
 	return nil
 }

@@ -38,14 +38,14 @@ func (a *Account) Gen() error {
 }
 
 // Export returns the account as encrypted JSON using standard scrypt params
-func (a *Account) Export(password string) ([]byte, error) {
+func (a *Account) Export(password []byte) ([]byte, error) {
 	key := &ks.Key{Id: a.ID, Address: a.Address, PrivateKey: a.PrivateKey}
-	return ks.EncryptKey(key, password, ks.StandardScryptN, ks.StandardScryptP)
+	return ks.EncryptKey(key, string(password), ks.StandardScryptN, ks.StandardScryptP)
 }
 
 // Import populates an account from an encrypted JSON payload
-func (a *Account) Import(payload []byte, password string) error {
-	key, err := ks.DecryptKey(payload, password)
+func (a *Account) Import(payload, password []byte) error {
+	key, err := ks.DecryptKey(payload, string(password))
 	if err != nil {
 		return err
 	}
