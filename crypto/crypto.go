@@ -1,25 +1,12 @@
 package crypto
 
 import (
-	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
-
-	"github.com/georacle-labs/georacle/crypto/cipher"
 )
-
-// GenKeyPair returns a new ed25519 keypair
-func GenKeyPair() (pub, priv []byte, err error) {
-	pub, priv, err = ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, nil, err
-	}
-	return
-}
 
 // Encrypt a byte slice
 func Encrypt(data, password []byte) ([]byte, error) {
-	var c cipher.Cipher
+	var c Cipher
 	if err := c.Encrypt(data, password); err != nil {
 		return nil, err
 	}
@@ -34,7 +21,7 @@ func Encrypt(data, password []byte) ([]byte, error) {
 
 // Decrypt a byte slice
 func Decrypt(data, password []byte) ([]byte, error) {
-	var c cipher.Cipher
+	var c Cipher
 
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -46,4 +33,13 @@ func Decrypt(data, password []byte) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// EdDSAGen generates an ed25519 key pair
+func EdDSAGen() (*KeyPair, error) {
+	k := KeyPair{T: EdDSA}
+	if err := k.Gen(); err != nil {
+		return nil, err
+	}
+	return &k, nil
 }

@@ -12,14 +12,18 @@ import (
 const (
 	// AccountStore is the default name of the account store database
 	AccountStore = "georacle_account_store"
+
+	// NodeStore is the default name of the node ID database
+	NodeStore = "georacle_node_store"
 )
 
-// DB encapsulates a mongo connection
+// DB encapsulates a mongo connection for persistent storage
 type DB struct {
 	Name     string          // the name of the db (typically matches network name)
 	Ctx      ctx.Context     // calling context
-	Client   *mongo.Client   // persistent mongo connection
+	Client   *mongo.Client   // mongo connection
 	Accounts *mongo.Database // client account store
+	Node     *mongo.Database // node identifiers
 }
 
 // Service represents a generic service type
@@ -42,6 +46,7 @@ func (d *DB) Open(uri string) error {
 
 	d.Client = client
 	d.Accounts = client.Database(AccountStore)
+	d.Node = client.Database(NodeStore)
 
 	return nil
 }

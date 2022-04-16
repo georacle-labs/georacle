@@ -10,6 +10,7 @@ import (
 	"github.com/georacle-labs/georacle/accounts"
 	"github.com/georacle-labs/georacle/chain"
 	"github.com/georacle-labs/georacle/db"
+	"github.com/georacle-labs/georacle/node"
 	"github.com/pkg/errors"
 )
 
@@ -19,6 +20,7 @@ type Config struct {
 	Password string `json:"password"` // master password (user prompted if empty)
 	WSURI    string `json:"ws_uri"`   // node websocket uri
 	DBURI    string `json:"db_uri"`   // mongo connection string
+	Port     uint16 `json:"port"`     // listening port
 }
 
 // NewClient returns a new client instance from an existing config
@@ -28,19 +30,19 @@ func (c *Config) NewClient() (*Client, error) {
 		return nil, err
 	}
 
-	node, err := chain.New(chainParams, c.WSURI)
+	db, err := c.ParseDB()
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := c.ParseDB()
+	chain, err := chain.New(chainParams, c.WSURI)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
 		Params: chainParams,
-		Chain:  node,
+		Chain:  chain,
 		DB:     db,
 	}
 
@@ -48,6 +50,8 @@ func (c *Config) NewClient() (*Client, error) {
 		Type:     chainParams.Type,
 		Password: []byte(c.Password),
 	}
+
+	client.Node = node.Node{Port: c.Port}
 
 	return client, nil
 }

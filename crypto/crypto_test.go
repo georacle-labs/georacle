@@ -8,18 +8,13 @@ import (
 	"testing"
 )
 
-const (
-	Iter = (1 << 5)
-)
-
 func TestEncrypt(t *testing.T) {
-	for i := 0; i < Iter; i++ {
-		pub, priv, err := GenKeyPair()
-		if err != nil {
+	k := KeyPair{T: EdDSA}
+	for i := 0; i < (1 << 5); i++ {
+		if err := k.Gen(); err != nil {
 			t.Fatal(err)
 		}
-
-		data := append(pub, priv...)
+		data := append(k.Pub, k.Priv...)
 		password := make([]byte, (mr.Uint32()%(1<<10))+1)
 		if _, err := io.ReadFull(rand.Reader, password); err != nil {
 			t.Fatal(err)

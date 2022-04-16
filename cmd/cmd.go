@@ -18,6 +18,7 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	config.Password = ctx.String("password")
 	config.DBURI = ctx.String("db-uri")
 	config.WSURI = ctx.String("ws-uri")
+	config.Port = uint16(ctx.Uint("port"))
 
 	// scan conf file for missing fields
 	jsonConfig := new(client.Config)
@@ -35,6 +36,9 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 		}
 		if len(config.DBURI) <= 0 {
 			config.DBURI = jsonConfig.DBURI
+		}
+		if config.Port <= 0 {
+			config.Port = jsonConfig.Port
 		}
 	}
 
