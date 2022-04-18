@@ -24,8 +24,8 @@ type Entry struct {
 	Key crypto.KeyPair
 }
 
-// ID represents an encrypted node ID
-type ID struct {
+// Key represents an encrypted key pair
+type Key struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	CreatedAt time.Time          `bson:"created_at,omitempty"`
 	UpdatedAt time.Time          `bson:"updated_at,omitempty"`
@@ -53,7 +53,7 @@ func (s *Store) Init(db *mongo.Database) error {
 // AddEntry adds an entry to the store and returns its id
 func (s *Store) AddEntry(raw []byte) (primitive.ObjectID, error) {
 	var id primitive.ObjectID
-	i := ID{Raw: raw, CreatedAt: time.Now(), UpdatedAt: time.Now()}
+	i := Key{Raw: raw, CreatedAt: time.Now(), UpdatedAt: time.Now()}
 
 	// throws error on duplicate key entry
 	result, err := s.ID.InsertOne(s.Ctx, i)
@@ -90,7 +90,7 @@ func (s *Store) GetEntries(password []byte) ([]Entry, error) {
 
 	defer cursor.Close(s.Ctx)
 
-	var id ID
+	var id Key
 	var k crypto.KeyPair
 
 	for cursor.Next(s.Ctx) {

@@ -34,12 +34,3 @@ func Decrypt(data, password []byte) ([]byte, error) {
 
 	return data, nil
 }
-
-// EdDSAGen generates an ed25519 key pair
-func EdDSAGen() (*KeyPair, error) {
-	k := KeyPair{T: EdDSA}
-	if err := k.Gen(); err != nil {
-		return nil, err
-	}
-	return &k, nil
-}

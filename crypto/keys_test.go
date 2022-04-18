@@ -17,12 +17,28 @@ func TestKeyGen(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if !ValidEdDSA(k1.Pub) {
+			t.Fatal("Valid pubkey")
+		}
+
 		if err := k2.FromSeed(k1.Priv[:32]); err != nil {
 			t.Fatal(err)
 		}
 
 		if !reflect.DeepEqual(k1, k2) {
 			t.Fatalf("%v != %v\n", k1, k2)
+		}
+
+		// invalid length
+		if ValidEdDSA(append(k1.Pub, 0x0)) {
+			t.Fatal("invalid length")
+		}
+
+		// unlikely to lie on the curve
+		randPub := make([]byte, 64)
+		io.ReadFull(rand.Reader, randPub)
+		if ValidEdDSA(randPub) {
+			t.Fatal("invalid encoding")
 		}
 	}
 }

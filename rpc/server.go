@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
@@ -33,9 +34,12 @@ func (s *Server) Run(ctx context.Context) error {
 		default:
 			con, err := s.listener.Accept()
 			if err != nil {
-
 				return err
 			}
+
+			remotePeer := con.RemoteAddr().String()
+			log.Printf("[+] Received connection from %v\n", remotePeer)
+
 			go jsonrpc.ServeConn(con)
 		}
 	}

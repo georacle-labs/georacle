@@ -15,7 +15,6 @@ import (
 func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	config := new(client.Config)
 	config.Network = ctx.String("network")
-	config.Password = ctx.String("password")
 	config.DBURI = ctx.String("db-uri")
 	config.WSURI = ctx.String("ws-uri")
 	config.Port = uint16(ctx.Uint("port"))
@@ -25,11 +24,9 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	confFile := ctx.String("config")
 
 	if err := jsonConfig.FromJSON(confFile); err == nil {
+		config.Password = jsonConfig.Password
 		if len(config.Network) <= 0 {
 			config.Network = jsonConfig.Network
-		}
-		if len(config.Password) <= 0 {
-			config.Password = jsonConfig.Password
 		}
 		if len(config.WSURI) <= 0 {
 			config.WSURI = jsonConfig.WSURI
@@ -100,9 +97,9 @@ func NewCLI() (*cli.App, error) {
 					Usage: "a mongodb connection string",
 				},
 				&cli.StringFlag{
-					Name:    "password",
+					Name:    "port",
 					Aliases: []string{"p"},
-					Usage:   "master password for unlocking keystore",
+					Usage:   "listening port",
 				},
 				&cli.StringFlag{
 					Name:    "config",
@@ -122,17 +119,8 @@ func NewCLI() (*cli.App, error) {
 					Usage: fmt.Sprintf("valid networks: %v", validNetworks),
 				},
 				&cli.StringFlag{
-					Name:  "ws-uri",
-					Usage: "a websocket rpc endpoint",
-				},
-				&cli.StringFlag{
 					Name:  "db-uri",
 					Usage: "a mongodb connection string",
-				},
-				&cli.StringFlag{
-					Name:    "password",
-					Aliases: []string{"p"},
-					Usage:   "master password for unlocking keystore",
 				},
 				&cli.StringFlag{
 					Name:    "config",

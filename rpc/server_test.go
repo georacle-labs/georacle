@@ -5,16 +5,11 @@ import (
 	"fmt"
 	"sync"
 	"testing"
-	"time"
 )
 
 const (
 	ServerPort = 9000
 	Clients    = (1 << 9)
-)
-
-var (
-	Timeout = time.Duration(10 * time.Second)
 )
 
 func TestServer(t *testing.T) {

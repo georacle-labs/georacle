@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 
+	"filippo.io/edwards25519"
 	"github.com/pkg/errors"
 )
 
@@ -13,7 +14,7 @@ var (
 	ErrKeyLen = errors.New("KeyLengthError")
 
 	// ErrKeyType is thrown on an invalid key type
-	ErrKeyType = errors.New("InvalidKeyType")
+	ErrKeyType = errors.New("InvalidKeyTypeError")
 )
 
 // KeyType is used to specify a signing algorithm
@@ -73,4 +74,25 @@ func (k *KeyPair) Encrypt(password []byte) ([]byte, error) {
 		return nil, err
 	}
 	return Encrypt(data, password)
+}
+
+// EdDSAGen generates an ed25519 key pair
+func EdDSAGen() (*KeyPair, error) {
+	k := KeyPair{T: EdDSA}
+	if err := k.Gen(); err != nil {
+		return nil, err
+	}
+	return &k, nil
+}
+
+// ValidEdDSA checks for a valid ed25519 pubkey
+func ValidEdDSA(pubkey []byte) bool {
+	// ensure 64 byte encoding
+	if len(pubkey) != ed25519.PublicKeySize {
+		return false
+	}
+
+	// ensure point lies on the curve
+	_, err := (&edwards25519.Point{}).SetBytes(pubkey)
+	return err == nil
 }

@@ -3,6 +3,7 @@ module github.com/georacle-labs/georacle
 go 1.18
 
 require (
+	filippo.io/edwards25519 v1.0.0-rc.1
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/georacle-labs/go-osm v0.1.0
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551

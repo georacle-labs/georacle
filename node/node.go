@@ -7,18 +7,20 @@ import (
 	"log"
 
 	"github.com/georacle-labs/georacle/crypto"
+	"github.com/georacle-labs/georacle/peer"
 	"github.com/georacle-labs/georacle/rpc"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Node facilitates external communication
-// through authenticated channels
+// Node represents a host on the network
 type Node struct {
-	Port    uint16          // listening port
-	KeyPair *crypto.KeyPair // Node identifier
-	Server  rpc.Server      // RPC server
-	Store   Store           // persistent store
-	Ctx     context.Context // calling context
+	ID      string               // node ID
+	Port    uint16               // listening port
+	KeyPair *crypto.KeyPair      // Node identifier
+	Server  rpc.Server           // RPC server
+	Store   Store                // persistent store
+	Ctx     context.Context      // calling context
+	Peers   map[string]peer.Peer // connected peers
 }
 
 // Init a node and generate a host ID
@@ -55,24 +57,26 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 		n.KeyPair = &entries[0].Key
 	}
 
-	log.Printf("Initialized node: %s\n", n.ID())
-
+	n.Peers = make(map[string]peer.Peer, 0)
 	n.Ctx = context.Background()
-	return n.Server.Init(n.Port)
+	n.ID = fmt.Sprintf("0x%s", hex.EncodeToString(n.KeyPair.Pub))
+
+	log.Printf("Initialized node: %s\n", n.ID)
+	if err := n.Server.Init(n.Port); err != nil {
+		return err
+	}
+
+	// bootstrap network
+	return n.Bootstrap()
 }
 
 // Start the underlying server and listen for connections
 func (n *Node) Start() error {
-	log.Printf("Started Node: %v\n", n.ID())
+	log.Printf("Started Node: %v\n", n.ID)
 	return n.Server.Run(n.Ctx)
 }
 
 // Stop the node and terminate the server
 func (n *Node) Stop() error {
 	return n.Server.Close()
-}
-
-// ID is a node's hex-encoded 32 byte public key
-func (n *Node) ID() string {
-	return fmt.Sprintf("0x%s", hex.EncodeToString(n.KeyPair.Pub))
 }
