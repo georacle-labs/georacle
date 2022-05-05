@@ -1,4 +1,5 @@
 EXEC=georacle
+EVM=chain/evm
 
 build:
 	go build -o $(EXEC)
@@ -6,5 +7,10 @@ build:
 start: build
 	./$(EXEC) start
 
-clean:
+evm: $(EVM)
+	cd $(EVM) && $(MAKE)
+
+clean: $(EVM)
 	rm -f $(EXEC)
+
+	cd $(EVM) && $(MAKE) clean
