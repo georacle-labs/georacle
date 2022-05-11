@@ -15,6 +15,9 @@ const (
 
 	// Kovan testnet
 	Kovan ID = 42
+
+	// LocalHost network
+	LocalHost ID = 1337
 )
 
 // Type denotes a family of chains
@@ -71,6 +74,13 @@ var (
 		"kovan": {
 			ID:   Kovan,
 			Name: "kovan",
+			Type: EVM,
+			Test: true,
+		},
+
+		"localhost": {
+			ID:   LocalHost,
+			Name: "localhost",
 			Type: EVM,
 			Test: true,
 		},

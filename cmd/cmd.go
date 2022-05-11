@@ -17,6 +17,7 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	config.Network = ctx.String("network")
 	config.DBURI = ctx.String("db-uri")
 	config.WSURI = ctx.String("ws-uri")
+	config.Addr = ctx.String("addr")
 	config.Port = uint16(ctx.Uint("port"))
 
 	// scan conf file for missing fields
@@ -33,6 +34,9 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 		}
 		if len(config.DBURI) <= 0 {
 			config.DBURI = jsonConfig.DBURI
+		}
+		if len(config.Addr) <= 0 {
+			config.Addr = jsonConfig.Addr
 		}
 		if config.Port <= 0 {
 			config.Port = jsonConfig.Port
@@ -95,6 +99,11 @@ func NewCLI() (*cli.App, error) {
 				&cli.StringFlag{
 					Name:  "db-uri",
 					Usage: "a mongodb connection string",
+				},
+				&cli.StringFlag{
+					Name:    "addr",
+					Aliases: []string{"a"},
+					Usage:   "public listening address",
 				},
 				&cli.StringFlag{
 					Name:    "port",

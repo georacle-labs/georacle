@@ -4,9 +4,20 @@ import (
 	"sync"
 
 	"github.com/georacle-labs/georacle/accounts"
+	ea "github.com/georacle-labs/georacle/accounts/evm"
 	"github.com/georacle-labs/georacle/chain"
+	"github.com/georacle-labs/georacle/chain/evm"
 	"github.com/georacle-labs/georacle/db"
 	"github.com/georacle-labs/georacle/node"
+	"github.com/pkg/errors"
+)
+
+var (
+	// ErrType is thrown on an invalid type cast
+	ErrType = errors.New("Invalid type cast")
+
+	// ErrChain is thrown on an inivalid chain type
+	ErrChain = errors.New("Invalid chain type")
 )
 
 // Client represents a single client instance
@@ -17,20 +28,45 @@ type Client struct {
 	Alive    bool            // true iff client initialized
 	Accounts accounts.Master // global account store
 	Node     node.Node       // RPC node
-	Wg       sync.WaitGroup  // Running GoRoutines
 }
 
 // Init Client
 func (c *Client) Init() error {
 	if !c.Alive {
-		// init the account store
+		// decrypt account store
 		if err := c.Accounts.Init(c.DB.Accounts); err != nil {
 			return err
 		}
-		// init the node store
+
+		// set the default signing account
+		if len(c.Accounts.Entries) > 0 {
+			defaultAccount := c.Accounts.Entries[0].Account
+			switch c.Params.Type {
+			case chain.EVM:
+				ethClient, ok := c.Chain.(*evm.Client)
+				if !ok {
+					return ErrType
+				}
+				ethAccount, ok := defaultAccount.(*ea.Account)
+				if !ok {
+					return ErrType
+				}
+				ethClient.Account = ethAccount
+			default:
+				return errors.Wrapf(ErrChain, " %v\n", c.Params.Type)
+			}
+		}
+
+		// init the rpc node
 		if err := c.Node.Init(c.DB.Node, c.Accounts.Password); err != nil {
 			return err
 		}
+
+		// init the underlying chain
+		if err := c.Chain.Open(); err != nil {
+			return err
+		}
+
 		c.Alive = true
 	}
 	return nil
@@ -42,23 +78,24 @@ func (c *Client) Start() (err error) {
 		return err
 	}
 
+	var wg sync.WaitGroup
 	errs := make(chan error, 2)
 
 	// start underlying chain
-	c.Wg.Add(1)
+	wg.Add(1)
 	go func() {
-		defer c.Wg.Done()
+		defer wg.Done()
 		errs <- c.Chain.Run()
 	}()
 
 	// start RPC node
-	c.Wg.Add(1)
+	wg.Add(1)
 	go func() {
-		defer c.Wg.Done()
+		defer wg.Done()
 		errs <- c.Node.Start()
 	}()
 
-	c.Wg.Wait()
+	wg.Wait()
 
 	close(errs)
 	for e := range errs {

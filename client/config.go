@@ -14,13 +14,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Config represents the complete configuration necessary to run a client
+var (
+	// ErrInvalidConf is thrown on an invalid config file
+	ErrInvalidConf = errors.New("Error parsing config file")
+
+	// ErrInvalidNetwork is thrown on an unsupported network type
+	ErrInvalidNetwork = errors.New("Invalid network")
+)
+
+// Config represents the complete configuration necessary to run a node
 type Config struct {
 	Network  string `json:"network"`  // network type
 	Password string `json:"password"` // master password (user prompted if empty)
-	WSURI    string `json:"ws_uri"`   // node websocket uri
+	WSURI    string `json:"ws_uri"`   // chain-specific client websocket uri
 	DBURI    string `json:"db_uri"`   // mongo connection string
-	Port     uint16 `json:"port"`     // listening port
+	Addr     string `json:"addr"`     // public listening address
+	Port     uint16 `json:"port"`     // public listening port
 }
 
 // NewClient returns a new client instance from an existing config
@@ -51,7 +60,7 @@ func (c *Config) NewClient() (*Client, error) {
 		Password: []byte(c.Password),
 	}
 
-	client.Node = node.Node{Port: c.Port}
+	client.Node = node.Node{Addr: c.Addr, Port: c.Port}
 
 	return client, nil
 }
@@ -78,7 +87,7 @@ func (c *Config) ParseDB() (*db.DB, error) {
 func (c *Config) FromJSON(confPath string) error {
 	file, err := ioutil.ReadFile(confPath)
 	if err != nil {
-		return errors.Errorf("Error parsing config file: %v", confPath)
+		return errors.Wrapf(ErrInvalidConf, confPath)
 	}
 
 	if err = json.Unmarshal([]byte(file), c); err != nil {
@@ -119,7 +128,7 @@ func ValidNetwork(network string) error {
 			return nil
 		}
 	}
-	return errors.Errorf(
-		"InvalidNetworkError: `%s` must be one of %v\n", network, validNetworks,
+	return errors.Wrapf(
+		ErrInvalidNetwork, " `%s` must be one of %v\n", network, validNetworks,
 	)
 }

@@ -15,13 +15,14 @@ type Server struct {
 }
 
 // Init an RPC server
-func (s *Server) Init(port uint16) (err error) {
-	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+func (s *Server) Init(addr string, port uint16) (err error) {
+	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err == nil {
 		for _, service := range Services {
 			rpc.Register(service)
 		}
 	}
+	log.Printf("Started JSON-RPC on %s:%d\n", addr, port)
 	return
 }
 
@@ -36,10 +37,8 @@ func (s *Server) Run(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-
 			remotePeer := con.RemoteAddr().String()
 			log.Printf("[+] Received connection from %v\n", remotePeer)
-
 			go jsonrpc.ServeConn(con)
 		}
 	}

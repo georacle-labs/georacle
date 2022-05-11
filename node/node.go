@@ -7,20 +7,20 @@ import (
 	"log"
 
 	"github.com/georacle-labs/georacle/crypto"
-	"github.com/georacle-labs/georacle/peer"
 	"github.com/georacle-labs/georacle/rpc"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Node represents a host on the network
 type Node struct {
-	ID      string               // node ID
-	Port    uint16               // listening port
-	KeyPair *crypto.KeyPair      // Node identifier
-	Server  rpc.Server           // RPC server
-	Store   Store                // persistent store
-	Ctx     context.Context      // calling context
-	Peers   map[string]peer.Peer // connected peers
+	ID      string          // node ID
+	Addr    string          // public listening addr
+	Port    uint16          // listening port
+	KeyPair *crypto.KeyPair // Node identifier
+	Server  rpc.Server      // RPC server
+	Store   Store           // persistent store
+	Ctx     context.Context // calling context
+	Peers   map[string]Peer // connected peers
 }
 
 // Init a node and generate a host ID
@@ -57,26 +57,39 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 		n.KeyPair = &entries[0].Key
 	}
 
-	n.Peers = make(map[string]peer.Peer, 0)
+	n.Peers = make(map[string]Peer, 0)
 	n.Ctx = context.Background()
 	n.ID = fmt.Sprintf("0x%s", hex.EncodeToString(n.KeyPair.Pub))
 
-	log.Printf("Initialized node: %s\n", n.ID)
-	if err := n.Server.Init(n.Port); err != nil {
-		return err
-	}
-
-	// bootstrap network
-	return n.Bootstrap()
+	return n.Server.Init(n.Addr, n.Port)
 }
 
-// Start the underlying server and listen for connections
+// Start the rpc server and listen for connections
 func (n *Node) Start() error {
-	log.Printf("Started Node: %v\n", n.ID)
+	log.Printf("Started P2P networking with ID %v\n", n.ID)
 	return n.Server.Run(n.Ctx)
 }
 
-// Stop the node and terminate the server
+// Stop the node and terminate the rpc server
 func (n *Node) Stop() error {
 	return n.Server.Close()
+}
+
+// Connect to a peer once
+func (n *Node) Connect(p Peer) error {
+	if p, ok := n.Peers[p.ID()]; ok {
+		// reuse existing connection
+		if p.Connected() {
+			return nil
+		}
+		// stale connection...reconnect
+		return p.Connect()
+	}
+	// new peer...connect
+	err := p.Connect()
+	if err == nil {
+		n.Peers[p.ID()] = p
+		log.Printf("[+] Connected to peer %s\n", p.ID())
+	}
+	return err
 }

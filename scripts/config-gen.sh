@@ -16,8 +16,12 @@ if [[ -z "${PASS}" ]]; then
 	PASS=$4
 fi
 
-if [[ -z "${PORT}" ]]; then
+if [[ -z "${ADDR}" ]]; then
 	PORT=$5
+fi
+
+if [[ -z "${PORT}" ]]; then
+	PORT=$6
 fi
 
 echo -e "{\n
@@ -25,5 +29,6 @@ echo -e "{\n
     \"ws_uri\":    \"${WS_URI}\",\n
     \"db_uri\" :   \"${DB_URI}\",\n
     \"password\":  \"${PASS}\",\n
+    \"addr\":      \"${ADDR}\",\n
     \"port\":      ${PORT}\n
 }"

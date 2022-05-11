@@ -8,15 +8,16 @@ import (
 )
 
 const (
-	ServerPort = 9000
-	Clients    = (1 << 9)
+	Addr    = "0.0.0.0"
+	Port    = 9000
+	Clients = (1 << 9)
 )
 
 func TestServer(t *testing.T) {
-	serverAddr := fmt.Sprintf("0.0.0.0:%d", ServerPort)
+	serverAddr := fmt.Sprintf("%s:%d", Addr, Port)
 
 	s := Server{}
-	s.Init(ServerPort)
+	s.Init(Addr, Port)
 	defer s.Close()
 
 	go s.Run(context.Background())

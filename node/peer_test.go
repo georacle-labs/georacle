@@ -1,4 +1,4 @@
-package peer
+package node
 
 import (
 	"crypto/rand"
