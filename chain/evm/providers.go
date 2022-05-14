@@ -2,10 +2,17 @@ package evm
 
 import (
 	"log"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/georacle-labs/georacle/node"
+)
+
+const (
+	// GasLimit is the default gas limit used to send transactions
+	GasLimit = uint64(300000)
 )
 
 var (
@@ -39,6 +46,68 @@ func (c *Client) ProviderManager() error {
 			log.Printf("[%v] Provider Join: %s", c.ID, join.Pubkey)
 		case exit := <-exits:
 			log.Printf("[%v] Provider Exit: %s", c.ID, exit.P)
+		case joinErr := <-joinSub.Err():
+			return joinErr
+		case exitErr := <-exitSub.Err():
+			return exitErr
 		}
 	}
+}
+
+// Join submits a tx to join the provider network
+func (c *Client) Join(pubkey []byte, netAddr []byte) error {
+	nonce, err := c.Client.PendingNonceAt(c.Ctx, c.Account.Address)
+	if err != nil {
+		return err
+	}
+
+	gasPrice, err := c.Client.SuggestGasPrice(c.Ctx)
+	if err != nil {
+		return err
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(c.Account.PrivateKey, c.ID)
+	if err != nil {
+		return err
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)
+	auth.GasLimit = GasLimit
+	auth.GasPrice = gasPrice
+
+	var pk, addr [32]byte
+	copy(pk[:], pubkey[:])
+	copy(addr[:], netAddr[:])
+
+	tx, err := c.Providers.Join(auth, pk, addr)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[%v] Sent join tx %s\n", c.ID, tx.Hash().Hex())
+	log.Printf("[%v] Joined provider network\n", c.ID)
+	return nil
+}
+
+// Peers queries the provider network for a list of peers
+func (c *Client) Peers() ([]node.Peer, error) {
+	providerAddrs, err := c.Providers.GetProviders(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	peers := make([]node.Peer, len(providerAddrs))
+	for i, addr := range providerAddrs {
+		p, err := c.Providers.Lookup(nil, addr)
+		if err != nil {
+			return nil, err
+		}
+		peer, err := node.NewPeer(p.Pubkey[:], p.NetAddr[:node.NetAddrSize])
+		if err != nil {
+			return nil, err
+		}
+		peers[i] = peer
+	}
+
+	return peers, nil
 }

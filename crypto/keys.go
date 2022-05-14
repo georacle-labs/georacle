@@ -9,6 +9,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	// PublicKeySize is 32 bytes (compressed)
+	PublicKeySize = ed25519.PublicKeySize
+)
+
 var (
 	// ErrKeyLen is thrown on an invalid key length
 	ErrKeyLen = errors.New("KeyLengthError")
@@ -43,7 +48,7 @@ func (k *KeyPair) Gen() (err error) {
 	return
 }
 
-// FromSeed initilizes a key pair from a 32 byte seed
+// FromSeed initializes a key pair from a 32 byte seed
 func (k *KeyPair) FromSeed(priv []byte) (err error) {
 	switch k.T {
 	case EdDSA:

@@ -1,7 +1,7 @@
 EXEC=georacle
 EVM=chain/evm
 
-build:
+build: evm
 	go build -o $(EXEC)
 
 start: build

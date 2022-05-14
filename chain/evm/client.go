@@ -122,6 +122,7 @@ func (c *Client) Run() (err error) {
 	}()
 
 	log.Printf("[%v] Started Provider manager %s", c.ID, ProvidersAddr.Hex())
+
 	wg.Wait()
 	return
 }

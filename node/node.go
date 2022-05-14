@@ -2,25 +2,38 @@ package node
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
 	"log"
+	"net"
 
 	"github.com/georacle-labs/georacle/crypto"
 	"github.com/georacle-labs/georacle/rpc"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
+)
+
+var (
+	// ErrInvalidHost is thrown on an invalid listening address
+	ErrInvalidHost = errors.New("Invalid Host")
 )
 
 // Node represents a host on the network
 type Node struct {
-	ID      string          // node ID
-	Addr    string          // public listening addr
+	ID      string          // unique node ID
+	Addr    net.IP          // public listening addr
 	Port    uint16          // listening port
 	KeyPair *crypto.KeyPair // Node identifier
 	Server  rpc.Server      // RPC server
 	Store   Store           // persistent store
 	Ctx     context.Context // calling context
 	Peers   map[string]Peer // connected peers
+}
+
+// New returns an empty node
+func New(host string, port uint16) (*Node, error) {
+	if ip := net.ParseIP(host); ip != nil {
+		return &Node{Addr: ip, Port: port}, nil
+	}
+	return nil, ErrInvalidHost
 }
 
 // Init a node and generate a host ID
@@ -59,9 +72,9 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 
 	n.Peers = make(map[string]Peer, 0)
 	n.Ctx = context.Background()
-	n.ID = fmt.Sprintf("0x%s", hex.EncodeToString(n.KeyPair.Pub))
+	n.ID = n.Hex()
 
-	return n.Server.Init(n.Addr, n.Port)
+	return n.Server.Init(n.Addr.String(), n.Port)
 }
 
 // Start the rpc server and listen for connections
@@ -76,20 +89,36 @@ func (n *Node) Stop() error {
 }
 
 // Connect to a peer once
-func (n *Node) Connect(p Peer) error {
+func (n *Node) Connect(p Peer) (err error) {
+	// avoid self connection
+	if n.Addr.Equal(p.Host) && n.Port == p.Port {
+		return
+	}
+
+	// reuse existing connection
 	if p, ok := n.Peers[p.ID()]; ok {
-		// reuse existing connection
 		if p.Connected() {
-			return nil
+			return
 		}
-		// stale connection...reconnect
+		// stale connection
 		return p.Connect()
 	}
-	// new peer...connect
-	err := p.Connect()
-	if err == nil {
+
+	// new connection
+	if err = p.Connect(); err == nil {
 		n.Peers[p.ID()] = p
 		log.Printf("[+] Connected to peer %s\n", p.ID())
 	}
-	return err
+
+	return
+}
+
+// Hex encode a node ID
+func (n *Node) Hex() string {
+	return Encode(n.KeyPair.Pub, n.Addr, n.Port)
+}
+
+// Host returns the node's public address
+func (n *Node) Host() []byte {
+	return EncodeAddr(n.Addr, n.Port)
 }

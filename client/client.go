@@ -67,6 +67,22 @@ func (c *Client) Init() error {
 			return err
 		}
 
+		// join the provider network
+		if err := c.Chain.Join(c.Node.KeyPair.Pub, c.Node.Host()); err != nil {
+			return err
+		}
+
+		// connect to peers
+		peers, err := c.Chain.Peers()
+		if err != nil {
+			return err
+		}
+		for _, p := range peers {
+			if err := c.Node.Connect(p); err != nil {
+				return err
+			}
+		}
+
 		c.Alive = true
 	}
 	return nil

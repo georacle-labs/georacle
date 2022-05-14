@@ -60,7 +60,11 @@ func (c *Config) NewClient() (*Client, error) {
 		Password: []byte(c.Password),
 	}
 
-	client.Node = node.Node{Addr: c.Addr, Port: c.Port}
+	node, err := node.New(c.Addr, c.Port)
+	if err != nil {
+		return nil, err
+	}
+	client.Node = *node
 
 	return client, nil
 }
