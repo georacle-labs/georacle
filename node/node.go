@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	// ErrInvalidHost is thrown on an invalid listening address
-	ErrInvalidHost = errors.New("Invalid Host")
+	// ErrHost is thrown on an invalid listening address
+	ErrHost = errors.New("invalid host")
 )
 
 // Node represents a host on the network
@@ -33,7 +33,7 @@ func New(host string, port uint16) (*Node, error) {
 	if ip := net.ParseIP(host); ip != nil {
 		return &Node{Addr: ip, Port: port}, nil
 	}
-	return nil, ErrInvalidHost
+	return nil, ErrHost
 }
 
 // Init a node and generate a host ID

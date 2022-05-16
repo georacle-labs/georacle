@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	// ErrInvalidChainID is thrown on an invalid ETH chain ID
-	ErrInvalidChainID = errors.New("Invalid Chain ID ")
+	// ErrChainID is thrown on an invalid ETH chain ID
+	ErrChainID = errors.New("invalid chain id")
 
-	// ErrInvalidClientState is thrown on an invalid client state
-	ErrInvalidClientState = errors.New("Invalid Client State")
+	// ErrClientState is thrown on an invalid client state
+	ErrClientState = errors.New("invalid client state")
 )
 
 // Client wraps a connection to an evm compatible node
@@ -74,10 +74,10 @@ func (c *Client) Open() error {
 		// validate chain ID
 		cid := new(big.Int)
 		if cid, err = client.ChainID(c.Ctx); err != nil {
-			return ErrInvalidChainID
+			return ErrChainID
 		}
 		if c.ID.Cmp(cid) != 0 {
-			return errors.Wrapf(ErrInvalidChainID, "%v != %v", c.ID.Int64(), cid.Int64())
+			return errors.Wrapf(ErrChainID, "%v != %v", c.ID.Int64(), cid.Int64())
 		}
 
 		// load providers contract instance
@@ -94,7 +94,7 @@ func (c *Client) Open() error {
 		return nil
 	}
 
-	return ErrInvalidClientState
+	return ErrClientState
 }
 
 // Close terminates an existing RPC connection
@@ -107,17 +107,21 @@ func (c *Client) Close() error {
 		return nil
 
 	}
-	return ErrInvalidClientState
+	return ErrClientState
 }
 
 // Run is the client's main blocking tx loop
 func (c *Client) Run() (err error) {
+	if !c.Alive {
+		return ErrClientState
+	}
+
 	var wg sync.WaitGroup
 
-	// start the provider manager
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		// start the provider manager
 		err = c.ProviderManager()
 	}()
 

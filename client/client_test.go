@@ -4,13 +4,18 @@ import (
 	"testing"
 )
 
-func TestNewClient(t *testing.T) {
+func GenTestClient() (*Client, error) {
 	cfg, err := DefaultConfig()
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
+	return cfg.NewClient()
 
-	if _, err := cfg.NewClient(); err != nil {
+}
+
+func TestNewClient(t *testing.T) {
+	_, err := GenTestClient()
+	if err != nil {
 		t.Fatal(err)
 	}
 }

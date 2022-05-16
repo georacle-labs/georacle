@@ -14,10 +14,13 @@ import (
 
 var (
 	// ErrType is thrown on an invalid type cast
-	ErrType = errors.New("Invalid type cast")
+	ErrType = errors.New("invalid type cast")
 
 	// ErrChain is thrown on an inivalid chain type
-	ErrChain = errors.New("Invalid chain type")
+	ErrChain = errors.New("invalid chain type")
+
+	// ErrAccount is thrown on an invalid account
+	ErrAccount = errors.New("invalid signing account")
 )
 
 // Client represents a single client instance
@@ -38,23 +41,26 @@ func (c *Client) Init() error {
 			return err
 		}
 
+		// panic on empty account store
+		if len(c.Accounts.Entries) <= 0 {
+			return ErrAccount
+		}
+
 		// set the default signing account
-		if len(c.Accounts.Entries) > 0 {
-			defaultAccount := c.Accounts.Entries[0].Account
-			switch c.Params.Type {
-			case chain.EVM:
-				ethClient, ok := c.Chain.(*evm.Client)
-				if !ok {
-					return ErrType
-				}
-				ethAccount, ok := defaultAccount.(*ea.Account)
-				if !ok {
-					return ErrType
-				}
-				ethClient.Account = ethAccount
-			default:
-				return errors.Wrapf(ErrChain, " %v\n", c.Params.Type)
+		defaultAccount := c.Accounts.Entries[0].Account
+		switch c.Params.Type {
+		case chain.EVM:
+			ethClient, ok := c.Chain.(*evm.Client)
+			if !ok {
+				return ErrType
 			}
+			ethAccount, ok := defaultAccount.(*ea.Account)
+			if !ok {
+				return ErrType
+			}
+			ethClient.Account = ethAccount
+		default:
+			return errors.Wrapf(ErrChain, " %v\n", c.Params.Type)
 		}
 
 		// init the rpc node
@@ -132,7 +138,7 @@ func (c *Client) Stop() {
 
 // ListAccounts lists accounts to stdout
 func (c *Client) ListAccounts() error {
-	if err := c.Init(); err != nil {
+	if err := c.Accounts.Init(c.DB.Accounts); err != nil {
 		return err
 	}
 	c.Accounts.DumpAccounts()
@@ -141,7 +147,7 @@ func (c *Client) ListAccounts() error {
 
 // NewAccount generates a new account and updates the keystore
 func (c *Client) NewAccount() error {
-	if err := c.Init(); err != nil {
+	if err := c.Accounts.Init(c.DB.Accounts); err != nil {
 		return err
 	}
 	return c.Accounts.NewAccount()
@@ -149,8 +155,9 @@ func (c *Client) NewAccount() error {
 
 // RemoveAccount removes an account from the keystore by index
 func (c *Client) RemoveAccount(index uint) error {
-	if err := c.Init(); err != nil {
+	if err := c.Accounts.Init(c.DB.Accounts); err != nil {
 		return err
 	}
+
 	return c.Accounts.RemoveAccount(index)
 }

@@ -36,7 +36,7 @@ func TestAccountMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(a, b) {
+	if !reflect.DeepEqual(a, b) || a.String() != b.String() {
 		t.Fatalf("%v != %v\n", a.String(), b.String())
 	}
 }

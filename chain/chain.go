@@ -6,6 +6,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	// ErrChain is thrown on an unsupported chain
+	ErrChain = errors.New("invalid chain")
+)
+
 // Chain defines the interface for a generic chain
 type Chain interface {
 	// Open the chain
@@ -30,6 +35,6 @@ func New(cfg *Config, uri string) (Chain, error) {
 	case EVM:
 		return evm.NewClient(int64(cfg.ID), uri)
 	default:
-		return nil, errors.Errorf("Invalid chain: `%v`\n", cfg.Name)
+		return nil, errors.Wrapf(ErrChain, ": %v", cfg.Name)
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 const (
 	Addr    = "0.0.0.0"
-	Port    = 9000
+	Port    = 4242
 	Clients = (1 << 9)
 )
 
@@ -17,7 +17,9 @@ func TestServer(t *testing.T) {
 	serverAddr := fmt.Sprintf("%s:%d", Addr, Port)
 
 	s := Server{}
-	s.Init(Addr, Port)
+	if err := s.Init(Addr, Port); err != nil {
+		t.Fatal(err)
+	}
 	defer s.Close()
 
 	go s.Run(context.Background())
@@ -37,7 +39,7 @@ func TestServer(t *testing.T) {
 			defer c.Close()
 			ack, err := c.Ping(context.Background())
 			if !ack {
-				errs <- ErrNoResponse
+				errs <- ErrResponse
 			}
 			errs <- err
 		}()

@@ -14,6 +14,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+	// ErrDelete is thrown on an unsuccessful account delete
+	ErrDelete = errors.New("unsuccessful delete")
+
+	// ErrAccount is thrown on an unsupported account type
+	ErrAccount = errors.New("invalid account type")
+)
+
 // Store wraps a mongo connection to an account store
 type Store struct {
 	AccountType chain.Type        // the account type
@@ -71,7 +79,7 @@ func (s *Store) RemoveEntry(id primitive.ObjectID) error {
 	}
 
 	if result.DeletedCount != 1 {
-		return errors.New("DocumentDeleteError")
+		return ErrDelete
 	}
 
 	return err
@@ -113,6 +121,6 @@ func (s *Store) DecryptAccount(password, encryptedAccount []byte) (Account, erro
 		err := a.Import(encryptedAccount, password)
 		return a, err
 	default:
-		return nil, errors.Errorf("Invalid Account type: %v", s.AccountType)
+		return nil, errors.Wrapf(ErrAccount, " %s", s.AccountType)
 	}
 }

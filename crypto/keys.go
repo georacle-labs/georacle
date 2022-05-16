@@ -16,10 +16,10 @@ const (
 
 var (
 	// ErrKeyLen is thrown on an invalid key length
-	ErrKeyLen = errors.New("KeyLengthError")
+	ErrKeyLen = errors.New("invalid key length")
 
 	// ErrKeyType is thrown on an invalid key type
-	ErrKeyType = errors.New("InvalidKeyTypeError")
+	ErrKeyType = errors.New("invalid key type")
 )
 
 // KeyType is used to specify a signing algorithm

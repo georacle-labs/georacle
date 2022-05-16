@@ -1,10 +1,15 @@
 package cmd
 
 import (
+	"errors"
 	"strconv"
-	"syscall"
 
 	"github.com/urfave/cli/v2"
+)
+
+var (
+	//ErrAccount is thrown on an unspecified account
+	ErrAccount = errors.New("specify an account")
 )
 
 // AccountList lists accounts to stdout
@@ -16,11 +21,11 @@ func AccountList(ctx *cli.Context) error {
 
 	client, err := config.NewClient()
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	if err := client.ListAccounts(); err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	return nil
@@ -30,16 +35,16 @@ func AccountList(ctx *cli.Context) error {
 func AccountNew(ctx *cli.Context) error {
 	config, err := ParseConfig(ctx)
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	client, err := config.NewClient()
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	if err := client.NewAccount(); err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	return nil
@@ -48,26 +53,26 @@ func AccountNew(ctx *cli.Context) error {
 // AccountRemove deletes an account from the keystore by id
 func AccountRemove(ctx *cli.Context) error {
 	if ctx.NArg() != 1 {
-		return cli.Exit("specify an account", int(syscall.EINVAL))
+		return ErrAccount
 	}
 
 	id, err := strconv.Atoi(ctx.Args().Get(0))
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	config, err := ParseConfig(ctx)
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	client, err := config.NewClient()
 	if err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	if err := client.RemoveAccount(uint(id)); err != nil {
-		return cli.Exit(err.Error(), int(syscall.EINVAL))
+		return err
 	}
 
 	return nil

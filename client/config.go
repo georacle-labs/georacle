@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	// ErrInvalidConf is thrown on an invalid config file
-	ErrInvalidConf = errors.New("Error parsing config file")
+	// ErrConf is thrown on an invalid config file
+	ErrConf = errors.New("error parsing config file")
 
-	// ErrInvalidNetwork is thrown on an unsupported network type
-	ErrInvalidNetwork = errors.New("Invalid network")
+	// ErrNetwork is thrown on an unsupported network type
+	ErrNetwork = errors.New("invalid network")
 )
 
 // Config represents the complete configuration necessary to run a node
@@ -91,7 +91,7 @@ func (c *Config) ParseDB() (*db.DB, error) {
 func (c *Config) FromJSON(confPath string) error {
 	file, err := ioutil.ReadFile(confPath)
 	if err != nil {
-		return errors.Wrapf(ErrInvalidConf, confPath)
+		return errors.Wrapf(ErrConf, confPath)
 	}
 
 	if err = json.Unmarshal([]byte(file), c); err != nil {
@@ -133,6 +133,6 @@ func ValidNetwork(network string) error {
 		}
 	}
 	return errors.Wrapf(
-		ErrInvalidNetwork, " `%s` must be one of %v\n", network, validNetworks,
+		ErrNetwork, " `%s` must be one of %v\n", network, validNetworks,
 	)
 }

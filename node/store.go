@@ -2,14 +2,19 @@ package node
 
 import (
 	ctx "context"
+	"errors"
 	"time"
 
 	"github.com/georacle-labs/georacle/crypto"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	// ErrDelete is thrown on an unsuccessful delete
+	ErrDelete = errors.New("unsuccessful delete")
 )
 
 // Store wraps a mongo connection to a node store
@@ -73,10 +78,10 @@ func (s *Store) RemoveEntry(id primitive.ObjectID) error {
 	}
 
 	if result.DeletedCount != 1 {
-		return errors.New("DocumentDeleteError")
+		return ErrDelete
 	}
 
-	return err
+	return nil
 }
 
 // GetEntries decrypts the node store

@@ -50,6 +50,8 @@ func (c *Client) ProviderManager() error {
 			return joinErr
 		case exitErr := <-exitSub.Err():
 			return exitErr
+		case <-c.Ctx.Done():
+			return nil
 		}
 	}
 }

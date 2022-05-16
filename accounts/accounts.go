@@ -13,6 +13,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var (
+	// ErrIndex is thrown on an out of bounds index
+	ErrIndex = errors.New("invalid account index")
+
+	//ErrDuplicate is thrown on inserting a duplicate account
+	ErrDuplicate = errors.New("duplicate account insert")
+)
+
 // Account represents a generic account
 type Account interface {
 	Gen() error
@@ -69,7 +77,7 @@ func (m *Master) NewAccount() error {
 			return err
 		}
 	default:
-		return errors.Errorf("Invalid Account type: %v", m.Type)
+		return errors.Wrapf(ErrAccount, ": %v", m.Type)
 	}
 
 	if err := m.InsertAccount(account); err != nil {
@@ -86,7 +94,7 @@ func (m *Master) NewAccount() error {
 // RemoveAccount removes an account from the store by index
 func (m *Master) RemoveAccount(index uint) error {
 	if int(index) >= len(m.Entries) {
-		return errors.New("InvalidIndexError")
+		return ErrIndex
 	}
 
 	toRemove := m.Entries[index]
@@ -105,7 +113,7 @@ func (m *Master) RemoveAccount(index uint) error {
 func (m *Master) InsertAccount(account Account) error {
 	for _, e := range m.Entries {
 		if e.Account.String() == account.String() {
-			return errors.New("DuplicateAccountError")
+			return ErrDuplicate
 		}
 	}
 

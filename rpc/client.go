@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	// ErrNoResponse is thrown when a connection times out
-	ErrNoResponse = errors.New("No Response From Server")
+	// ErrResponse is thrown on a connection time out
+	ErrResponse = errors.New("no response from server")
 )
 
 // Client wraps an RPC client

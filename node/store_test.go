@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	NumEntries = (1 << 10)
+	NumEntries = (1 << 5)
 )
 
 var (
-	Entries [NumEntries]primitive.ObjectID
-	dbURI   = os.Getenv("DB_URI")
+	TestPassword = []byte("Sup3rS3cureP@ssword!")
+	Entries      [NumEntries]primitive.ObjectID
+	dbURI        = os.Getenv("DB_URI")
 )
 
 func GenTestNodeStore() (*Store, error) {
@@ -42,7 +43,12 @@ func TestAddEntry(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		id, err := ns.AddEntry(k.Priv)
+		payload, err := k.Encrypt(TestPassword)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		id, err := ns.AddEntry(payload)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,6 +68,26 @@ func TestAddEntry(t *testing.T) {
 
 	if count != NumEntries {
 		t.Fatalf("Insufficient Count: %v != %v", count, NumEntries)
+	}
+}
+
+func TestGetEntries(t *testing.T) {
+	ns, err := GenTestNodeStore()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entries, err := ns.GetEntries(TestPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entries) != NumEntries {
+		t.Fatalf("expected %v entries. got %v", NumEntries, len(entries))
+	}
+
+	if _, err = ns.GetEntries([]byte{}); err == nil {
+		t.Fatal("expected decryption error")
 	}
 }
 

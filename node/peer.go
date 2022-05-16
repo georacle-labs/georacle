@@ -22,10 +22,10 @@ type Peer struct {
 // NewPeer returns an empty peer
 func NewPeer(pubkey, addr []byte) (Peer, error) {
 	if len(addr) != NetAddrSize {
-		return Peer{}, ErrInvalidHost
+		return Peer{}, ErrHost
 	}
 	if !crypto.ValidEdDSA(pubkey) {
-		return Peer{}, ErrInvalidPubkey
+		return Peer{}, ErrPubkey
 	}
 	p := Peer{Pubkey: pubkey, Host: addr[:16]}
 	p.Port = binary.BigEndian.Uint16(addr[16:NetAddrSize])

@@ -22,11 +22,11 @@ const (
 )
 
 var (
-	// ErrInvalidNodeID is thrown on parsing an invalid node ID
-	ErrInvalidNodeID = errors.New("Invalid node ID")
+	// ErrNodeID is thrown on parsing an invalid node ID
+	ErrNodeID = errors.New("invalid node id")
 
-	// ErrInvalidPubkey is thrown on an invalid pubkey
-	ErrInvalidPubkey = errors.New("Invalid public key")
+	// ErrPubkey is thrown on an invalid pubkey
+	ErrPubkey = errors.New("invalid public key")
 )
 
 // Encode hex encodes a node ID into the format:
@@ -68,12 +68,12 @@ func Decode(id string) (pubkey []byte, ip net.IP, port uint16, err error) {
 
 	// 50 byte node ID
 	if len(payload) != PayloadSize {
-		err = ErrInvalidNodeID
+		err = ErrNodeID
 		return
 	}
 
 	if !crypto.ValidEdDSA(payload[:crypto.PublicKeySize]) {
-		err = ErrInvalidPubkey
+		err = ErrPubkey
 		return
 	}
 	netAddr := payload[crypto.PublicKeySize:PayloadSize]

@@ -2,19 +2,12 @@ package db
 
 import (
 	ctx "context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-const (
-	// AccountStore is the default name of the account store database
-	AccountStore = "georacle_account_store"
-
-	// NodeStore is the default name of the node ID database
-	NodeStore = "georacle_node_store"
 )
 
 // DB encapsulates a mongo connection for persistent storage
@@ -45,8 +38,12 @@ func (d *DB) Open(uri string) error {
 	}
 
 	d.Client = client
-	d.Accounts = client.Database(AccountStore)
-	d.Node = client.Database(NodeStore)
+
+	accountStoreName := fmt.Sprintf("georacle_%s_account_store", d.Name)
+	d.Accounts = client.Database(accountStoreName)
+
+	nodeStoreName := fmt.Sprintf("georacle_%s_node_store", d.Name)
+	d.Node = client.Database(nodeStoreName)
 
 	return nil
 }
