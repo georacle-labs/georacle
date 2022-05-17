@@ -16,4 +16,6 @@
 
 .env
 *.json
-georacle
+
+# geth data store
+chaindata

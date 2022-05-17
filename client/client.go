@@ -18,9 +18,6 @@ var (
 
 	// ErrChain is thrown on an inivalid chain type
 	ErrChain = errors.New("invalid chain type")
-
-	// ErrAccount is thrown on an invalid account
-	ErrAccount = errors.New("invalid signing account")
 )
 
 // Client represents a single client instance
@@ -41,9 +38,11 @@ func (c *Client) Init() error {
 			return err
 		}
 
-		// panic on empty account store
+		// generate new account on empty account store
 		if len(c.Accounts.Entries) <= 0 {
-			return ErrAccount
+			if err := c.Accounts.NewAccount(); err != nil {
+				return err
+			}
 		}
 
 		// set the default signing account

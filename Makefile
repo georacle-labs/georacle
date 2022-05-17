@@ -1,14 +1,21 @@
 EXEC=georacle
 EVM=chain/evm
+CHAINS=evm
 
-build: evm
-	go build -o $(EXEC)
+build: $(CHAINS)
+	go build ./cmd/...
+
+install: $(CHAINS)
+	go install ./cmd/...
 
 start: build
 	./$(EXEC) start
 
 evm: $(EVM)
 	cd $(EVM) && $(MAKE)
+
+docker: build
+	docker build -t $(EXEC) .
 
 clean: $(EVM)
 	rm -f $(EXEC)

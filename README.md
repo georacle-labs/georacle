@@ -10,7 +10,7 @@ A Decentralized Oracle Network for OpenStreetMap
 ## Installation 
 
 ```bash
-go get -u https://github.com/georacle-labs/georacle
+go install github.com/georacle-labs/georacle/cmd/georacle
 ```
 
 ## Test

@@ -1,0 +1,104 @@
+# This is an example docker-compose file used to run an
+# isolated Georacle network in a contained environment
+
+# To add more nodes to the network:
+# - create a new data store
+# - point the db-uri to the new data store
+# - keep the ws-uri unchanged to join the same eth network
+
+services:
+
+  # local geth dev node
+  geth:
+    image: ethereum/client-go:latest
+    restart: unless-stopped
+
+    # expose geth node externally.
+    # to connect to console run: geth attach http://127.0.0.1:8545
+    ports:
+     - "30303:30303"
+     - "30303:30303/udp"
+     - "8545:8545"
+     - "8546:8546"
+    volumes: # persist chain data
+      - ./chaindata:/chaindata
+    stop_signal: SIGINT
+    stop_grace_period: 2m
+    command:
+      - --dev
+      - --http
+      - --http.api
+      - "web3,eth,debug,personal,net"
+      - --http.addr=0.0.0.0
+      - --ws
+      - --ws.origins=*
+      - --ws.addr=0.0.0.0
+      - --ws.api
+      - "web3,eth,debug,personal,net"
+      - --vmdebug
+      - --datadir
+      - "/chaindata"
+
+  # mongo data store
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: georacle
+      MONGO_INITDB_ROOT_PASSWORD: example-password
+
+  # georacle node
+  georacle:
+    image: georacle:latest
+    environment:
+      PROVIDERS: ${PROVIDERS} # providers contract address
+    command:
+      - start
+      - --network
+      - "localhost"
+      - --ws-uri
+      - "ws://geth:8546"
+      - --db-uri
+      - "mongodb://georacle:example-password@mongo:27017/"
+      - --addr
+      - "0.0.0.0"
+      - --port
+      - "3141"
+      - --password
+      - ${KEYSTORE_SECRET} # From env variable if set
+    depends_on:
+      - geth
+      - mongo
+
+# To add a node to the network:
+#
+# 1. add new data store
+# mongo0:
+#   image: mongo
+#   restart: always
+#   environment:
+#     MONGO_INITDB_ROOT_USERNAME: georacle
+#     MONGO_INITDB_ROOT_PASSWORD: example-password
+#
+# 2. add new georacle node
+# georacle0:
+#   image: georacle:latest
+#   environment:
+#     PROVIDERS: ${PROVIDERS} # providers contract address
+#   command:
+#     - start
+#     - --network
+#     - "localhost"
+#     - --ws-uri # NOTE: keep ws-uri unchanged to join the same eth network
+#     - "ws://geth:8546"
+#     - --db-uri # NOTE: point db-uri to new data store
+#     - "mongodb://georacle:example-password@mongo0:27017/"
+#     - --addr
+#     - "0.0.0.0"
+#     - --port
+#     - "3141"
+#     - --password
+#     - ${KEYSTORE_SECRET} # From env variable if set
+#   depends_on:
+#     - geth
+#     - mongo0

@@ -1,7 +1,9 @@
-package cmd
+package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"reflect"
 	"strings"
 
@@ -11,7 +13,18 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// ParseConfig reads cli opts into a client config
+func main() {
+	cli, err := NewCLI()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cli.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// ParseConfig reads cli flags into a client configuration
 func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	config := new(client.Config)
 	config.Network = ctx.String("network")
@@ -19,6 +32,7 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 	config.WSURI = ctx.String("ws-uri")
 	config.Addr = ctx.String("addr")
 	config.Port = uint16(ctx.Uint("port"))
+	config.Password = ctx.String("password")
 
 	// scan conf file for missing fields
 	jsonConfig := new(client.Config)
@@ -41,6 +55,9 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 		if config.Port <= 0 {
 			config.Port = jsonConfig.Port
 		}
+		if len(config.Password) <= 0 {
+			config.Password = jsonConfig.Password
+		}
 	}
 
 	if len(config.Password) <= 0 {
@@ -49,27 +66,9 @@ func ParseConfig(ctx *cli.Context) (*client.Config, error) {
 			return nil, err
 		}
 		config.Password = pass
-	} else {
-		// zero password
-		jsonConfig.Password = ""
 	}
 
 	return config, nil
-}
-
-// Start parses a cli config and starts the underlying client
-func Start(ctx *cli.Context) error {
-	config, err := ParseConfig(ctx)
-	if err != nil {
-		return err
-	}
-
-	client, err := config.NewClient()
-	if err != nil {
-		return err
-	}
-
-	return client.Start()
 }
 
 // NewCLI inits a new cli instance of the client
@@ -89,16 +88,19 @@ func NewCLI() (*cli.App, error) {
 			Usage: "start the georacle node",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:  "network",
-					Usage: fmt.Sprintf("valid networks: %v", validNetworks),
+					Name:    "network",
+					Aliases: []string{"n"},
+					Usage:   fmt.Sprintf("valid networks: %v", validNetworks),
 				},
 				&cli.StringFlag{
-					Name:  "ws-uri",
-					Usage: "a websocket rpc endpoint",
+					Name:    "ws-uri",
+					Aliases: []string{"w"},
+					Usage:   "a websocket rpc endpoint",
 				},
 				&cli.StringFlag{
-					Name:  "db-uri",
-					Usage: "a mongodb connection string",
+					Name:    "db-uri",
+					Aliases: []string{"d"},
+					Usage:   "a mongodb connection string",
 				},
 				&cli.StringFlag{
 					Name:    "addr",
@@ -111,10 +113,14 @@ func NewCLI() (*cli.App, error) {
 					Usage:   "listening port",
 				},
 				&cli.StringFlag{
+					Name:  "password",
+					Usage: "data store decryption key",
+				},
+				&cli.StringFlag{
 					Name:    "config",
 					Value:   defaultConfigPath,
 					Aliases: []string{"c"},
-					Usage:   "Load json configuration from `FILE`",
+					Usage:   "load json configuration from `FILE`",
 				},
 			},
 			Action: Start,
@@ -124,18 +130,24 @@ func NewCLI() (*cli.App, error) {
 			Usage: "manage georacle accounts",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
-					Name:  "network",
-					Usage: fmt.Sprintf("valid networks: %v", validNetworks),
+					Name:    "network",
+					Aliases: []string{"n"},
+					Usage:   fmt.Sprintf("valid networks: %v", validNetworks),
 				},
 				&cli.StringFlag{
-					Name:  "db-uri",
-					Usage: "a mongodb connection string",
+					Name:    "db-uri",
+					Aliases: []string{"d"},
+					Usage:   "a mongodb connection string",
+				},
+				&cli.StringFlag{
+					Name:  "password",
+					Usage: "data store decryption key",
 				},
 				&cli.StringFlag{
 					Name:    "config",
 					Value:   defaultConfigPath,
 					Aliases: []string{"c"},
-					Usage:   "Load json configuration from `FILE`",
+					Usage:   "load json configuration from `FILE`",
 				},
 			},
 			Subcommands: []*cli.Command{
@@ -162,6 +174,21 @@ func NewCLI() (*cli.App, error) {
 	}
 
 	return app, nil
+}
+
+// Start parses a cli config and starts the underlying client
+func Start(ctx *cli.Context) error {
+	config, err := ParseConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	client, err := config.NewClient()
+	if err != nil {
+		return err
+	}
+
+	return client.Start()
 }
 
 // GetPass prompts the user for a password without echoing
