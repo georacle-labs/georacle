@@ -1,6 +1,7 @@
 # This is an example docker-compose file used to run an
 # isolated Georacle network in a contained environment
 
+# This example starts 3 nodes (georacle0, georacle1, georacle2)
 # To add more nodes to the network:
 # - create a new data store
 # - point the db-uri to the new data store
@@ -27,6 +28,8 @@ services:
     command:
       - --dev
       - --http
+      - --http.corsdomain
+      - "https://remix.ethereum.org"
       - --http.api
       - "web3,eth,debug,personal,net"
       - --http.addr=0.0.0.0
@@ -39,16 +42,13 @@ services:
       - --datadir
       - "/chaindata"
 
-  # mongo data store
-  mongo:
+  mongo0:
     image: mongo
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: georacle
       MONGO_INITDB_ROOT_PASSWORD: example-password
-
-  # georacle node
-  georacle:
+  georacle0:
     image: georacle:latest
     environment:
       PROVIDERS: ${PROVIDERS} # providers contract address
@@ -59,21 +59,77 @@ services:
       - --ws-uri
       - "ws://geth:8546"
       - --db-uri
-      - "mongodb://georacle:example-password@mongo:27017/"
+      - "mongodb://georacle:example-password@mongo0:27017/"
       - --addr
-      - "0.0.0.0"
+      - "georacle0"
       - --port
       - "3141"
       - --password
       - ${KEYSTORE_SECRET} # From env variable if set
     depends_on:
       - geth
-      - mongo
+      - mongo0
+
+  mongo1:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: georacle
+      MONGO_INITDB_ROOT_PASSWORD: example-password
+  georacle1:
+    image: georacle:latest
+    environment:
+      PROVIDERS: ${PROVIDERS} # providers contract address
+    command:
+      - start
+      - --network
+      - "localhost"
+      - --ws-uri
+      - "ws://geth:8546"
+      - --db-uri
+      - "mongodb://georacle:example-password@mongo1:27017/"
+      - --addr
+      - "georacle1"
+      - --port
+      - "3141"
+      - --password
+      - ${KEYSTORE_SECRET} # From env variable if set
+    depends_on:
+      - geth
+      - mongo1
+
+  mongo2:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: georacle
+      MONGO_INITDB_ROOT_PASSWORD: example-password
+  georacle2:
+    image: georacle:latest
+    environment:
+      PROVIDERS: ${PROVIDERS} # providers contract address
+    command:
+      - start
+      - --network
+      - "localhost"
+      - --ws-uri
+      - "ws://geth:8546"
+      - --db-uri
+      - "mongodb://georacle:example-password@mongo2:27017/"
+      - --addr
+      - "georacle2"
+      - --port
+      - "3141"
+      - --password
+      - ${KEYSTORE_SECRET} # From env variable if set
+    depends_on:
+      - geth
+      - mongo2
 
 # To add a node to the network:
 #
 # 1. add new data store
-# mongo0:
+# mongo3:
 #   image: mongo
 #   restart: always
 #   environment:
@@ -81,7 +137,7 @@ services:
 #     MONGO_INITDB_ROOT_PASSWORD: example-password
 #
 # 2. add new georacle node
-# georacle0:
+# georacle3:
 #   image: georacle:latest
 #   environment:
 #     PROVIDERS: ${PROVIDERS} # providers contract address
@@ -92,13 +148,13 @@ services:
 #     - --ws-uri # NOTE: keep ws-uri unchanged to join the same eth network
 #     - "ws://geth:8546"
 #     - --db-uri # NOTE: point db-uri to new data store
-#     - "mongodb://georacle:example-password@mongo0:27017/"
+#     - "mongodb://georacle:example-password@mongo3:27017/"
 #     - --addr
-#     - "0.0.0.0"
+#     - "georacle3"
 #     - --port
 #     - "3141"
 #     - --password
 #     - ${KEYSTORE_SECRET} # From env variable if set
 #   depends_on:
 #     - geth
-#     - mongo0
+#     - mongo3

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/georacle-labs/georacle/node"
 )
 
 var (
@@ -93,11 +95,13 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	peerUpdates := make(chan node.Peer, 0)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err = c.Run()
+		err = c.Run(peerUpdates)
 	}()
 
 	// wait for run call

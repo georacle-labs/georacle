@@ -73,7 +73,9 @@ func (c *Client) Init() error {
 		}
 
 		// join the provider network
-		if err := c.Chain.Join(c.Node.KeyPair.Pub, c.Node.Host()); err != nil {
+		pubKey := c.Node.KeyPair.Pub
+		hostAddr := c.Node.Host()
+		if err := c.Chain.Join(pubKey, hostAddr); err != nil {
 			return err
 		}
 
@@ -106,7 +108,7 @@ func (c *Client) Start() (err error) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		errs <- c.Chain.Run()
+		errs <- c.Chain.Run(c.Node.PeerUpdates)
 	}()
 
 	// start RPC node

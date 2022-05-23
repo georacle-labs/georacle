@@ -20,7 +20,7 @@ type Chain interface {
 	Close() error
 
 	// Run the on chain protocol
-	Run() error
+	Run(chan node.Peer) error
 
 	// Join the provider network
 	Join([]byte, []byte) error

@@ -14,24 +14,32 @@ import (
 var (
 	// ErrHost is thrown on an invalid listening address
 	ErrHost = errors.New("invalid host")
+
+	// ErrDisconnect is thrown when disconnecting from an invalid peer
+	ErrDisconnect = errors.New("already disconnected")
 )
 
 // Node represents a host on the network
 type Node struct {
-	ID      string          // unique node ID
-	Addr    net.IP          // public listening addr
-	Port    uint16          // listening port
-	KeyPair *crypto.KeyPair // Node identifier
-	Server  rpc.Server      // RPC server
-	Store   Store           // persistent store
-	Ctx     context.Context // calling context
-	Peers   map[string]Peer // connected peers
+	ID          string          // unique node ID
+	Addr        net.IP          // public listening addr
+	Port        uint16          // listening port
+	KeyPair     *crypto.KeyPair // Node identifier
+	Server      rpc.Server      // RPC server
+	Store       Store           // persistent store
+	Ctx         context.Context // calling context
+	Peers       map[string]Peer // connected peers
+	PeerUpdates chan Peer       // provider manager
 }
 
 // New returns an empty node
 func New(host string, port uint16) (*Node, error) {
-	if ip := net.ParseIP(host); ip != nil {
-		return &Node{Addr: ip, Port: port}, nil
+	res, err := net.LookupIP(host)
+	if err != nil {
+		return nil, errors.Wrapf(ErrHost, err.Error())
+	}
+	if len(res) > 0 {
+		return &Node{Addr: res[0], Port: port}, nil
 	}
 	return nil, ErrHost
 }
@@ -47,7 +55,7 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 		return err
 	}
 
-	if len(entries) <= 0 {
+	if len(entries) < 1 {
 		// node not yet initialized -> generate a new identity
 		log.Println("Generating new identity...")
 
@@ -71,6 +79,7 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 	}
 
 	n.Peers = make(map[string]Peer, 0)
+	n.PeerUpdates = make(chan Peer, 0)
 	n.Ctx = context.Background()
 	n.ID = n.Hex()
 
@@ -80,6 +89,28 @@ func (n *Node) Init(db *mongo.Database, password []byte) error {
 // Start the rpc server and listen for connections
 func (n *Node) Start() error {
 	log.Printf("Started P2P networking with ID %v\n", n.ID)
+
+	// start managing peers
+	go func() {
+		for {
+			select {
+			case p := <-n.PeerUpdates:
+				var err error
+				peerID := p.ID()
+				if peer, connected := n.Peers[peerID]; connected {
+					err = n.Disconnect(peer)
+				} else {
+					err = n.Connect(p)
+				}
+				if err != nil {
+					log.Println("[Node] failed to connect to peer: ", peerID)
+				}
+			case <-n.Ctx.Done():
+				return
+			}
+		}
+	}()
+
 	return n.Server.Run(n.Ctx)
 }
 
@@ -111,6 +142,19 @@ func (n *Node) Connect(p Peer) (err error) {
 	}
 
 	return
+}
+
+// Disconnect from a peer if connected
+func (n *Node) Disconnect(p Peer) error {
+	peerID := p.ID()
+	if peer, connected := n.Peers[peerID]; connected {
+		if err := peer.client.Close(); err != nil {
+			return err
+		}
+		delete(n.Peers, peerID)
+		return nil
+	}
+	return ErrDisconnect
 }
 
 // Hex encode a node ID

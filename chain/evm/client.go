@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/georacle-labs/georacle/accounts/evm"
+	"github.com/georacle-labs/georacle/node"
 	"github.com/pkg/errors"
 )
 
@@ -111,7 +112,7 @@ func (c *Client) Close() error {
 }
 
 // Run is the client's main blocking tx loop
-func (c *Client) Run() (err error) {
+func (c *Client) Run(p chan node.Peer) (err error) {
 	if !c.Alive {
 		return ErrClientState
 	}
@@ -121,8 +122,7 @@ func (c *Client) Run() (err error) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// start the provider manager
-		err = c.ProviderManager()
+		err = c.ProviderManager(p)
 	}()
 
 	log.Printf("[%v] Started Provider manager %s", c.ID, ProvidersAddr.Hex())

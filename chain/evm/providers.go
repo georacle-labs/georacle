@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"encoding/hex"
 	"log"
 	"math/big"
 	"os"
@@ -21,7 +22,7 @@ var (
 )
 
 // ProviderManager subscribes to join/exit events
-func (c *Client) ProviderManager() error {
+func (c *Client) ProviderManager(p chan node.Peer) error {
 	joins := make(chan *ProvidersProviderJoin)
 	exits := make(chan *ProvidersProviderExit)
 	watchOpts := &bind.WatchOpts{Context: c.Ctx, Start: nil}
@@ -34,7 +35,7 @@ func (c *Client) ProviderManager() error {
 	defer joinSub.Unsubscribe()
 
 	// monitor exit events
-	exitSub, err := c.Providers.WatchProviderExit(watchOpts, exits, nil)
+	exitSub, err := c.Providers.WatchProviderExit(watchOpts, exits, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -43,9 +44,21 @@ func (c *Client) ProviderManager() error {
 	for {
 		select {
 		case join := <-joins:
-			log.Printf("[%v] Provider Join: %s", c.ID, join.Pubkey)
+			id := hex.EncodeToString(append(join.Pubkey[:], join.NetAddr[:node.NetAddrSize]...))
+			log.Printf("[%v] Provider Join (%s): 0x%s", c.ID, join.P, id)
+			peer, err := node.NewPeer(join.Pubkey[:], join.NetAddr[:node.NetAddrSize])
+			if err != nil {
+				return err
+			}
+			p <- peer
 		case exit := <-exits:
-			log.Printf("[%v] Provider Exit: %s", c.ID, exit.P)
+			id := hex.EncodeToString(append(exit.Pubkey[:], exit.NetAddr[:node.NetAddrSize]...))
+			log.Printf("[%v] Provider Exit (%s): 0x%s", c.ID, exit.P, id)
+			peer, err := node.NewPeer(exit.Pubkey[:], exit.NetAddr[:node.NetAddrSize])
+			if err != nil {
+				return err
+			}
+			p <- peer
 		case joinErr := <-joinSub.Err():
 			return joinErr
 		case exitErr := <-exitSub.Err():
@@ -109,6 +122,7 @@ func (c *Client) Peers() ([]node.Peer, error) {
 			return nil, err
 		}
 		peers[i] = peer
+		log.Printf("[Providers] Discovered peer (%d) %s\n", i, peer.ID())
 	}
 
 	return peers, nil
